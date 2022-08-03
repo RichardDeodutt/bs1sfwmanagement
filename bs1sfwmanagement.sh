@@ -67,7 +67,7 @@ if [ $UID != 0 ]; then
 fi
 
 #Using apt-get instead of apt because apt is meant for the terminal while apt-get is for scripts
-#Update the package list, needed before a upgrade and ignore output
+#Update the package list, needed before a upgrade and ignoring output
 apt-get update > /dev/null 2>&1
 
 #Run the Upgrade command to check what can be upgraded and their version changes
@@ -81,6 +81,7 @@ UpgradeLinesCount=$(echo "$UpgradeCheck" | wc -l)
 
 #If CanUpgrade is 0 it means no upgrade is available, 1 means a upgrade is available
 if [ $CanUpgrade -eq 0 ]; then
+    #Add the last line of $UpgradeCheck to the log file
     log "$(echo "$UpgradeCheck" | tail -n 1)"
     log "All packages are up to date."
 else
@@ -105,5 +106,6 @@ else
     fi
 fi
 
+#Logging script exiting
 log "Script Successfully ran"
 exit 0
