@@ -8,8 +8,8 @@
 
 
 #Logfile location
-Date=$(echo "_"`date +"%m-%d-%Y"`)
-LogFile="$HOME/bs1sfwmanagement$Date.log"
+Date=$(echo `date +"%m-%d-%Y"`"_")
+LogFile="$HOME/"$Date"bs1sfwmanagement.log"
 
 #function to get a timestamp
 timestamp(){
@@ -28,7 +28,7 @@ setuplogfile(){
     #Check if log file creation worked
     if [ ! $? -eq 0 ]; then
         #if the previous log file creation failed try one last time
-        LogFile="bs1sfwmanagement$Date.log"
+        LogFile=$Date"bs1sfwmanagement.log"
         touch $LogFile > /dev/null 2>&1
     fi
 }
@@ -42,11 +42,11 @@ setuplogfile(){
 #Check if we have atleast 1 argument
 if [ $# -gt 0 ]; then 
     #Assuming the first argument is a log file, check if it exists or create it and hide command errors
-    touch $1 > /dev/null 2>&1
+    touch $Date$1 > /dev/null 2>&1
     #Check if argument logfile exists or creation worked
     if [ $? -eq 0 ]; then
         #Argument log file exists/creation worked, using this file as a log file
-        LogFile=$1
+        LogFile=$Date$1
     else
         #Set up logfile and log error with the arugment
         setuplogfile
@@ -66,9 +66,44 @@ if [ $UID != 0 ]; then
     exit 1
 fi
 
-Update=$(apt update)
-Latest=$(echo $Update | grep -c "All packages are up to date.")
+#Using apt-get instead of apt because apt is meant for the terminal while apt-get is for scripts
+#Update the package list, needed before a upgrade and ignore output
+apt-get update > /dev/null 2>&1
 
-if [ $Latest -eq 1 ]; then
+#Run the Upgrade command to check what can be upgraded and their version changes
+UpgradeCheck=$(apt-get upgrade -V --assume-no)
+
+#Check if there is a upgrade available by checking if it asked to continue with a upgrade
+CanUpgrade=$(echo "$UpgradeCheck" | grep -c "Do you want to continue?")
+
+#The Number of Lines in the UpgradeCheck Variable
+UpgradeLinesCount=$(echo "$UpgradeCheck" | wc -l)
+
+#If CanUpgrade is 0 it means no upgrade is available, 1 means a upgrade is available
+if [ $CanUpgrade -eq 0 ]; then
+    log "$(echo "$UpgradeCheck" | tail -n 1)"
     log "All packages are up to date."
+else
+    log "Upgrade available."
+    #Remove the last two lines from UpgradeCheck and the first 4 lines from UpgradeCheck to get a upgrade list that writes to file
+    UpgradeList="$(echo "$UpgradeCheck" | head -n $((($UpgradeLinesCount - 2))) | tail -n $((($UpgradeLinesCount - 6))))"
+    #The Number of Lines in the UpgradeList Variable for the for loop to write line by line to the log file
+    UpgradeListCount=$(echo "$UpgradeList" | wc -l)
+    for ((i=1;i<=UpgradeListCount;i++)); do
+        log "$(echo "$UpgradeList" | head -n $i | tail -n 1)"
+    done
+
+    #Actually Upgrade the server and ignore output
+    apt-get upgrade -y > /dev/null 2>&1
+
+    #Check if the update worked
+    if [ $? -eq 0 ]; then
+        log "Update Successful"
+    else
+        log "Update Failed"
+        exit 1
+    fi
 fi
+
+log "Script Successfully ran"
+exit 0
