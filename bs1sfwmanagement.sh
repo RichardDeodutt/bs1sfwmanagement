@@ -71,7 +71,8 @@ fi
 apt-get update > /dev/null 2>&1
 
 #Run the Upgrade command to check what can be upgraded and their version changes
-UpgradeCheck=$(apt-get upgrade -V --assume-no)
+#--with-new-pkgs is Needed because apt-get will by default keep back updated packages that have new dependencies unlike apt
+UpgradeCheck=$(apt-get --with-new-pkgs upgrade -V --assume-no)
 
 #Check if there is a upgrade available by checking if it asked to continue with a upgrade
 CanUpgrade=$(echo "$UpgradeCheck" | grep -c "Do you want to continue?")
@@ -95,7 +96,7 @@ else
     done
 
     #Actually Upgrade the server and ignore output
-    apt-get upgrade -y > /dev/null 2>&1
+    apt-get --with-new-pkgs upgrade -y > /dev/null 2>&1
 
     #Check if the update worked
     if [ $? -eq 0 ]; then
