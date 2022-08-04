@@ -2,8 +2,8 @@
 
 #Richard Deodutt
 #08/01/2022
-#This script is a software management script meant for a server. It will automtically update a server using apt package manager when executed. Run with admin permissions when needed using cron to schedule the updates. The only parameter accepted is a file location for where the log file should be stored. 
-#0 23 * * 5 richard sudo /bin/bash /home/richard/bs1sfwmanagement.sh
+#This script is a software management script meant for a server. It will automtically update a server using apt package manager when executed. Run with admin permissions when needed using cron to schedule the updates. The only parameter accepted is a file location for where the log file should be stored, but it is optional as it will default to putting it in the /root folder. Script file should be place in /bin for the cron job to work with the cron job below. 
+#0 23 * * 5 root /bin/bash /bin/bs1sfwmanagement.sh
 
 
 
@@ -13,7 +13,9 @@ LogFile="$HOME/"$Date"bs1sfwmanagement.log"
 
 #function to get a timestamp
 timestamp(){
-    echo $(date +"%m/%d/%Y | %a %b %d %Y || %H:%M:%S %Z | %I:%M:%S %p %Z")
+    #Two Different Date and Time Styles
+    #echo $(date +"%m/%d/%Y %H:%M:%S %Z")
+    echo $(date +"%a %b %d %Y %I:%M:%S %p %Z")
 }
 
 #function to log text with a timestamp to a logfile
@@ -84,7 +86,7 @@ UpgradeLinesCount=$(echo "$UpgradeCheck" | wc -l)
 if [ $CanUpgrade -eq 0 ]; then
     #Add the last line of $UpgradeCheck to the log file
     log "$(echo "$UpgradeCheck" | tail -n 1)"
-    log "All packages are up to date."
+    log "All packages are up to date that can be upgraded now."
 else
     log "Upgrade available."
     #Remove the last two lines from UpgradeCheck and the first 4 lines from UpgradeCheck to get a upgrade list that writes to file
